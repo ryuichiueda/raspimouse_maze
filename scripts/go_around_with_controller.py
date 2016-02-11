@@ -44,9 +44,6 @@ class GoAround():
 	    diff = s.right_side - s.left_side
             forward_max = max([s.right_forward,s.left_forward])
 
-            data.linear.x = 0.15 * (1000 - forward_max)/1000.0
-            data.angular.z = math.pi / 180.0 * (diff * 0.08) 
-
             if data.linear.x < 0.03 and math.fabs(data.angular.z) < 0.2:
                 stop_counter += 1
 
