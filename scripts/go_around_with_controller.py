@@ -7,14 +7,19 @@ from raspimouse_maze.msg import Decision
 
 class GoAround():
     def __init__(self):
-        self.cmd_vel = rospy.Publisher('/cmd_vel',Twist,queue_size=1)
         self.decision = rospy.Publisher('/decision',Decision,queue_size=100)
 
         self.sensor_values = LightSensorValues()
         rospy.Subscriber('/lightsensors', LightSensorValues, self.callback)
 
+        self.cmd_vel = Twist()
+        rospy.Subscriber('/cmd_vel', Twist, self.callback2)
+
     def callback(self,messages):
         self.sensor_values = messages
+
+    def callback2(self,messages):
+        self.cmd_vel = messages
 
     def output_decision(self,d,s):
         dc = Decision()
@@ -36,19 +41,17 @@ class GoAround():
 	
         while not rospy.is_shutdown():
             s = self.sensor_values
+            data = self.cmd_vel
 
             if stop_counter > 10:
                 stop_counter = 0
                 continue
 
-	    diff = s.right_side - s.left_side
-            forward_max = max([s.right_forward,s.left_forward])
-
             if data.linear.x < 0.03 and math.fabs(data.angular.z) < 0.2:
                 stop_counter += 1
 
             self.output_decision(data,s)
-            self.cmd_vel.publish(data)
+            #self.cmd_vel.publish(data)
             rate.sleep()
 
 if __name__ == '__main__':
