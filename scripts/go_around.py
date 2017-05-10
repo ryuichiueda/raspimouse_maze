@@ -2,11 +2,12 @@
 import rospy, math, sys, random
 from geometry_msgs.msg import Twist
 from std_srvs.srv import Trigger, TriggerResponse
-from pimouse_ros.msg import LightSensorValues
+from raspimouse_ros_2.msg import LightSensorValues
 
 class GoAround():
     def __init__(self):
         self.cmd_vel = rospy.Publisher('/cmd_vel',Twist,queue_size=1)
+        self.decision = rospy.Publisher('/decision',Twist,queue_size=100)
 
         self.sensor_values = LightSensorValues()
         rospy.Subscriber('/lightsensors', LightSensorValues, self.callback)
@@ -24,7 +25,8 @@ class GoAround():
             data.angular.z *= -1
 
         while not rospy.is_shutdown():
-            if self.sensor_values.sum_forward < 250:
+            print self.sensor_values
+            if self.sensor_values.sum_forward < 1000:
                 return
 
             self.cmd_vel.publish(data)
