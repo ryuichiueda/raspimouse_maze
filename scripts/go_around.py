@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import rospy, math
+import rospy, math, sys, random
 from geometry_msgs.msg import Twist
 from std_srvs.srv import Trigger, TriggerResponse
 from pimouse_ros.msg import LightSensorValues
@@ -14,20 +14,36 @@ class GoAround():
     def callback(self,messages):
         self.sensor_values = messages
 
-    def turn180(self):
+    def turn(self):
         rate = rospy.Rate(20)
         data = Twist()
 
         data.linear.x = 0.0
-        data.angular.z = math.pi
+        data.angular.z = math.pi/2
+        if random.uniform(0.0,1.0) > 0.5:
+            data.angular.z *= -1
 
         while not rospy.is_shutdown():
-            if self.sensor_values.sum_forward < 100:
+            if self.sensor_values.sum_forward < 250:
                 return
 
             self.cmd_vel.publish(data)
             rate.sleep()
-    
+
+    def turn(self):
+        rate = rospy.Rate(20)
+        data = Twist()
+
+        data.linear.x = 0.0
+        data.angular.z = math.pi/2
+
+        while not rospy.is_shutdown():
+            if self.sensor_values.sum_forward < 200:
+                return
+
+            self.cmd_vel.publish(data)
+            rate.sleep()
+
     def run(self):
         rate = rospy.Rate(20)
         data = Twist()
@@ -36,15 +52,17 @@ class GoAround():
 	
         while not rospy.is_shutdown():
             if stop_counter > 10:
-                self.turn180()
+                self.turn()
                 stop_counter = 0
-    
+                continue
+
 	    diff = self.sensor_values.right_side - self.sensor_values.left_side
-            data.linear.x = 0.1 * (2500 - self.sensor_values.sum_forward)/2500.0
+            forward_max = max([self.sensor_values.right_forward,self.sensor_values.left_forward])
+
+            data.linear.x = 0.15 * (1000 - forward_max)/1000.0
             data.angular.z = math.pi / 180.0 * (diff * 0.08) 
 
-            if math.fabs(data.linear.x) < 0.03 and \
-               math.fabs(data.angular.z) < 0.1:
+            if data.linear.x < 0.03 and math.fabs(data.angular.z) < 0.2:
                 stop_counter += 1
 
             self.cmd_vel.publish(data)
