@@ -3,11 +3,12 @@ import rospy, math, sys, random
 from geometry_msgs.msg import Twist
 from std_srvs.srv import Trigger, TriggerResponse
 from raspimouse_ros_2.msg import LightSensorValues
+from raspimouse_maze.msg import Decision
 
 class GoAround():
     def __init__(self):
         self.cmd_vel = rospy.Publisher('/cmd_vel',Twist,queue_size=1)
-        self.decision = rospy.Publisher('/decision',Twist,queue_size=100)
+        self.decision = rospy.Publisher('/decision',Decision,queue_size=100)
 
         self.sensor_values = LightSensorValues()
         rospy.Subscriber('/lightsensors', LightSensorValues, self.callback)
@@ -25,26 +26,25 @@ class GoAround():
             data.angular.z *= -1
 
         while not rospy.is_shutdown():
-            print self.sensor_values
-            if self.sensor_values.sum_forward < 1000:
+            s = self.sensor_values
+            if s.sum_forward < 300:
                 return
 
+            self.output_decision(data,s)
             self.cmd_vel.publish(data)
             rate.sleep()
 
-    def turn(self):
-        rate = rospy.Rate(20)
-        data = Twist()
+    def output_decision(self,d,s):
+        dc = Decision()
 
-        data.linear.x = 0.0
-        data.angular.z = math.pi/2
+        dc.left_side = s.left_side
+        dc.right_side = s.right_side
+        dc.left_forward = s.left_forward
+        dc.right_forward = s.right_forward
+        dc.linear_x = d.linear.x
+        dc.angular_z = d.angular.z
 
-        while not rospy.is_shutdown():
-            if self.sensor_values.sum_forward < 200:
-                return
-
-            self.cmd_vel.publish(data)
-            rate.sleep()
+        self.decision.publish(dc)
 
     def run(self):
         rate = rospy.Rate(20)
@@ -53,13 +53,15 @@ class GoAround():
 	stop_counter = 0
 	
         while not rospy.is_shutdown():
+            s = self.sensor_values
+
             if stop_counter > 10:
                 self.turn()
                 stop_counter = 0
                 continue
 
-	    diff = self.sensor_values.right_side - self.sensor_values.left_side
-            forward_max = max([self.sensor_values.right_forward,self.sensor_values.left_forward])
+	    diff = s.right_side - s.left_side
+            forward_max = max([s.right_forward,s.left_forward])
 
             data.linear.x = 0.15 * (1000 - forward_max)/1000.0
             data.angular.z = math.pi / 180.0 * (diff * 0.08) 
@@ -67,6 +69,7 @@ class GoAround():
             if data.linear.x < 0.03 and math.fabs(data.angular.z) < 0.2:
                 stop_counter += 1
 
+            self.output_decision(data,s)
             self.cmd_vel.publish(data)
             rate.sleep()
 
