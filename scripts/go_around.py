@@ -22,8 +22,8 @@ class GoAround():
 
         data.linear.x = 0.0
         data.angular.z = math.pi/2
-        if random.uniform(0.0,1.0) > 0.5:
-            data.angular.z *= -1
+        #if random.uniform(0.0,1.0) > 0.5:
+        #    data.angular.z *= -1
 
         while not rospy.is_shutdown():
             s = self.sensor_values
