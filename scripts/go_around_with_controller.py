@@ -4,9 +4,11 @@ from geometry_msgs.msg import Twist
 from std_srvs.srv import Trigger, TriggerResponse
 from raspimouse_ros_2.msg import LightSensorValues
 from raspimouse_maze.msg import Decision
+from sensor_msgs.msg import Joy
 
 class GoAround():
     def __init__(self):
+        self._joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback, queue_size = 1)
         self.cmd_vel = rospy.Publisher('/cmd_vel',Twist,queue_size=1)
         self.decision = rospy.Publisher('/decision',Decision,queue_size=100)
 
@@ -28,7 +30,7 @@ class GoAround():
 
         self.decision.publish(dc)
 
-    def run(self):
+    def run(self,joy_msg):
         rate = rospy.Rate(20)
         data = Twist()
 
@@ -41,11 +43,9 @@ class GoAround():
                 stop_counter = 0
                 continue
 
-	    diff = s.right_side - s.left_side
-            forward_max = max([s.right_forward,s.left_forward])
-
-            data.linear.x = 0.15 * (1000 - forward_max)/1000.0
-            data.angular.z = math.pi / 180.0 * (diff * 0.08) 
+            if joy_msg.buttons[0] == 1:
+                data.linear.x = joy_msg.axes[1] * 0.2
+                data.angular.z = joy_msg.axes[0] * 3.14 / 4
 
             if data.linear.x < 0.03 and math.fabs(data.angular.z) < 0.2:
                 stop_counter += 1
