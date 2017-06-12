@@ -17,7 +17,7 @@ class GoAround():
         self.sensor_values = messages
 
     def turn(self):
-        rate = rospy.Rate(20)
+        rate = rospy.Rate(10)
         data = Twist()
 
         data.linear.x = 0.0
@@ -47,7 +47,7 @@ class GoAround():
         self.decision.publish(dc)
 
     def run(self):
-        rate = rospy.Rate(20)
+        rate = rospy.Rate(10)
         data = Twist()
 
 	stop_counter = 0
@@ -64,7 +64,7 @@ class GoAround():
             forward_max = max([s.right_forward,s.left_forward])
 
             data.linear.x = 0.15 * (1000 - forward_max)/1000.0
-            data.angular.z = math.pi / 180.0 * (diff * 0.08) 
+            data.angular.z = math.pi / 180.0 * (diff * 0.1) 
 
             if data.linear.x < 0.03 and math.fabs(data.angular.z) < 0.2:
                 stop_counter += 1
