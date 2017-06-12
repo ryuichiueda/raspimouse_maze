@@ -37,21 +37,10 @@ class GoAround():
         rate = rospy.Rate(20)
         data = Twist()
 
-	stop_counter = 0
-	
         while not rospy.is_shutdown():
             s = self.sensor_values
             data = self.cmd_vel
-
-            if stop_counter > 10:
-                stop_counter = 0
-                continue
-
-            if data.linear.x < 0.03 and math.fabs(data.angular.z) < 0.2:
-                stop_counter += 1
-
             self.output_decision(data,s)
-            #self.cmd_vel.publish(data)
             rate.sleep()
 
 if __name__ == '__main__':
