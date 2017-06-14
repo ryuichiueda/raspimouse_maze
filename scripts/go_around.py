@@ -21,7 +21,7 @@ class GoAround():
         data = Twist()
 
         data.linear.x = 0.0
-        data.angular.z = math.pi/2
+        data.angular.z = math.pi
         #if random.uniform(0.0,1.0) > 0.5:
         #    data.angular.z *= -1
 
@@ -63,8 +63,8 @@ class GoAround():
 	    diff = s.right_side - s.left_side
             forward_max = max([s.right_forward,s.left_forward])
 
-            data.linear.x = 0.15 * (1000 - forward_max)/1000.0
-            data.angular.z = math.pi / 180.0 * (diff * 0.1) 
+            data.linear.x = 0.16 * (1300 - forward_max)/1000.0
+            data.angular.z = math.pi / 180.0 * (diff * 0.15) 
 
             if data.linear.x < 0.03 and math.fabs(data.angular.z) < 0.2:
                 stop_counter += 1
