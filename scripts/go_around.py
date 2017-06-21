@@ -20,10 +20,8 @@ class GoAround():
         rate = rospy.Rate(10)
         data = Twist()
 
-        data.linear.x = 0.0
+        data.linear.x = -0.03
         data.angular.z = math.pi*0.75
-        #if random.uniform(0.0,1.0) > 0.5:
-        #    data.angular.z *= -1
 
         while not rospy.is_shutdown():
             s = self.sensor_values
@@ -50,24 +48,23 @@ class GoAround():
         rate = rospy.Rate(10)
         data = Twist()
 
-	stop_counter = 0
+        data.linear.x = 0.1
+	sw_time = rospy.Time.now()
 	
         while not rospy.is_shutdown():
             s = self.sensor_values
 
-            if stop_counter > 10:
-                self.turn()
-                stop_counter = 0
-                continue
-
 	    diff = s.right_side - s.left_side
             forward_max = max([s.right_forward,s.left_forward])
 
-            data.linear.x = 0.16 * (1300 - forward_max)/1000.0
             data.angular.z = math.pi / 180.0 * (diff * 0.12) 
 
-            if data.linear.x < 0.03 and math.fabs(data.angular.z) < 0.2:
-                stop_counter += 1
+            if s.sum_forward > 3000:
+        	data.linear.x = -0.1
+		sw_time = rospy.Time.now()
+
+	    if data.linear.x == -0.1 and rospy.Time.now() - sw_time > rospy.Duration(3):
+        	data.linear.x = 0.1
 
             self.output_decision(data,s)
             self.cmd_vel.publish(data)
